@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Podcast Episode Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            color: #2d3748;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 2.5em;
+            font-weight: 700;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex: 1;
+            min-width: 300px;
+        }
+
+        input[type="url"] {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        input[type="url"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            padding: 12px 24px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .filter-container {
+            margin-bottom: 20px;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .filter-group label {
+            font-weight: 500;
+            color: #4a5568;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        select {
+            padding: 8px 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            color: #4a5568;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-container {
+            margin-bottom: 20px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background: white;
+            border-radius: 12px;
+            padding: 4px;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .search-box:focus-within {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        #searchInput {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            font-size: 16px;
+            background: transparent;
+        }
+
+        #searchInput:focus {
+            outline: none;
+        }
+
+        .search-box button {
+            padding: 8px 12px;
+            background: #e2e8f0;
+            color: #4a5568;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .search-box button:hover {
+            background: #cbd5e0;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .search-stats {
+            margin-top: 10px;
+            padding: 8px 12px;
+            background: #f8fafc;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #4a5568;
+            display: none;
+        }
+
+        .search-stats.active {
+            display: block;
+        }
+
+        .status {
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            display: none;
+        }
+
+        .status.success {
+            background: #f0fff4;
+            color: #38a169;
+            border: 1px solid #9ae6b4;
+        }
+
+        .status.error {
+            background: #fff5f5;
+            color: #e53e3e;
+            border: 1px solid #feb2b2;
+        }
+
+        .status.loading {
+            background: #ebf8ff;
+            color: #3182ce;
+            border: 1px solid #90cdf4;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            background: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background: linear-gradient(45deg, #f7fafc, #edf2f7);
+            font-weight: 600;
+            color: #2d3748;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        tr:hover {
+            background: #f8fafc;
+        }
+
+        .podcast-name {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .episode-title {
+            font-weight: 500;
+            color: #2d3748;
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .episode-title:hover {
+            white-space: normal;
+            word-wrap: break-word;
+        }
+
+        .date {
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .host, .guest {
+            color: #4a5568;
+            font-size: 14px;
+        }
+
+        .editable {
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .editable:hover {
+            background: #f0f4f8;
+        }
+
+        .editable.editing {
+            background: #fff;
+            border: 2px solid #667eea;
+        }
+
+        .editable input {
+            border: none;
+            outline: none;
+            background: transparent;
+            font-size: 14px;
+            color: #4a5568;
+            width: 100%;
+        }
+
+        .favorite-star {
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.2s ease;
+        }
+
+        .favorite-star:hover {
+            transform: scale(1.2);
+        }
+
+        .favorite-star.active {
+            color: #fbbf24;
+        }
+
+        .favorite-star.inactive {
+            color: #d1d5db;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #718096;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            opacity: 0.3;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px 20px;
+            color: #718096;
+        }
+
+        .no-results svg {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 15px;
+            opacity: 0.3;
+        }
+
+        .podcast-feeds {
+            margin-bottom: 20px;
+        }
+
+        .feed-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: #f8fafc;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .feed-url {
+            color: #4a5568;
+            font-size: 14px;
+            flex: 1;
+            margin-right: 10px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .remove-feed {
+            background: #e53e3e;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .remove-feed:hover {
+            background: #c53030;
+        }
+
+        .highlight {
+            background: #fef5e7;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #cbd5e0;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .input-group {
+                min-width: auto;
+            }
+            
+            .filter-row {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            
+            .filter-group {
+                justify-content: space-between;
+            }
+            
+            th, td {
+                padding: 8px;
+                font-size: 14px;
+            }
+            
+            .episode-title {
+                max-width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎧 Podcast Episode Tracker</h1>
+        
+        <div class="controls">
+            <div class="input-group">
+                <input type="url" id="rssUrl" placeholder="RSS Feed URL eingeben (z.B. https://example.com/feed.xml)">
+                <button onclick="addFeed()">Feed hinzufügen</button>
+            </div>
+            <button onclick="refreshAll()">Alle aktualisieren</button>
+            <button onclick="exportToCSV()">Als CSV exportieren</button>
+        </div>
+
+        <div class="filter-container">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="timeFilter">Zeitraum:</label>
+                    <select id="timeFilter" onchange="applyFilters()">
+                        <option value="all">Alle</option>
+                        <option value="week">Letzte Woche</option>
+                        <option value="month">Letzter Monat</option>
+                        <option value="quarter" selected>Letztes Quartal</option>
+                        <option value="year">Letztes Jahr</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="countFilter">Anzahl:</label>
+                    <select id="countFilter" onchange="applyFilters()">
+                        <option value="all">Alle</option>
+                        <option value="10">Letzte 10</option>
+                        <option value="20">Letzte 20</option>
+                        <option value="30" selected>Letzte 30</option>
+                        <option value="50">Letzte 50</option>
+                        <option value="100">Letzte 100</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="search-container">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 Suche nach Stichworten in allen Spalten..." oninput="applyFilters()">
+                <button onclick="clearSearch()">✕</button>
+            </div>
+            <div class="search-stats" id="searchStats"></div>
+        </div>
+
+        <div class="podcast-feeds" id="podcastFeeds"></div>
+
+        <div class="status" id="status"></div>
+
+        <div class="table-container">
+            <table id="episodeTable">
+                <thead>
+                    <tr>
+                        <th>Podcast</th>
+                        <th>Episode</th>
+                        <th>Datum</th>
+                        <th>Host</th>
+                        <th>Gast</th>
+                        <th>Sprache</th>
+                        <th>Thema</th>
+                        <th>Favorit</th>
+                    </tr>
+                </thead>
+                <tbody id="episodeTableBody">
+                    <tr>
+                        <td colspan="8" class="empty-state">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                            </svg>
+                            <h3>Noch keine Podcast-Feeds hinzugefügt</h3>
+                            <p>Fügen Sie RSS-Feed-URLs hinzu, um Podcast-Episoden zu verfolgen</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let podcastFeeds = [];
+        let allEpisodes = [];
+        let filteredEpisodes = [];
+        let currentSearchTerm = '';
+        let episodeData = new Map(); // Speichert zusätzliche Daten für jede Episode
+
+        // Event Listener für Enter-Taste im URL-Input
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlInput = document.getElementById('rssUrl');
+            urlInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addFeed();
+                }
+            });
+        });
+
+        function getEpisodeId(episode) {
+            return `${episode.feedUrl}:${episode.episodeTitle}:${episode.pubDate}`;
+        }
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            
+            if (type !== 'loading') {
+                setTimeout(() => {
+                    status.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        function addFeed() {
+            const urlInput = document.getElementById('rssUrl');
+            const url = urlInput.value.trim();
+            
+            if (!url) {
+                showStatus('Bitte geben Sie eine RSS-Feed-URL ein', 'error');
+                return;
+            }
+
+            if (!isValidUrl(url)) {
+                showStatus('Bitte geben Sie eine gültige URL ein', 'error');
+                return;
+            }
+
+            if (podcastFeeds.includes(url)) {
+                showStatus('Dieser Feed wurde bereits hinzugefügt', 'error');
+                return;
+            }
+
+            podcastFeeds.push(url);
+            urlInput.value = '';
+            updateFeedsList();
+            fetchFeed(url);
+        }
+
+        function isValidUrl(string) {
+            try {
+                new URL(string);
+                return true;
+            } catch (_) {
+                return false;
+            }
+        }
+
+        function removeFeed(url) {
+            // Bestätigungsdialog anzeigen
+            const episodeCount = allEpisodes.filter(episode => episode.feedUrl === url).length;
+            if (episodeCount > 0) {
+                if (!confirm(`Möchten Sie diesen Feed wirklich entfernen?\n\nDies wird ${episodeCount} Episode(n) und alle zugehörigen Daten (Notizen, Favoriten, etc.) löschen.`)) {
+                    return;
+                }
+            }
+            
+            // Entferne alle Episoden-Daten für diesen Feed
+            const episodesToRemove = allEpisodes.filter(episode => episode.feedUrl === url);
+            episodesToRemove.forEach(episode => {
+                const episodeId = getEpisodeId(episode);
+                episodeData.delete(episodeId);
+            });
+            
+            // Entferne Feed aus der Liste
+            podcastFeeds = podcastFeeds.filter(feed => feed !== url);
+            
+            // Entferne Episoden aus der Liste
+            allEpisodes = allEpisodes.filter(episode => episode.feedUrl !== url);
+            
+            // Aktualisiere die Anzeige
+            applyFilters();
+            updateFeedsList();
+            
+            // Zeige Bestätigungsnachricht
+            showStatus(`Feed entfernt: ${episodeCount} Episode(n) gelöscht`, 'success');
+        }
+
+        function updateFeedsList() {
+            const feedsContainer = document.getElementById('podcastFeeds');
+            
+            if (podcastFeeds.length === 0) {
+                feedsContainer.innerHTML = '';
+                return;
+            }
+
+            feedsContainer.innerHTML = podcastFeeds.map(feed => `
+                <div class="feed-item">
+                    <div class="feed-url" title="${feed}">${feed}</div>
+                    <button class="remove-feed" onclick="removeFeed('${feed.replace(/'/g, "\\'")}')">Entfernen</button>
+                </div>
+            `).join('');
+        }
+
+        async function fetchFeed(url) {
+            showStatus('Lade Feed...', 'loading');
+            
+            try {
+                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+                const response = await fetch(proxyUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const xmlText = await response.text();
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+                
+                const parseError = xmlDoc.querySelector('parsererror');
+                if (parseError) {
+                    throw new Error('Invalid XML format');
+                }
+
+                const episodes = parseRSSFeed(xmlDoc, url);
+                
+                // Entferne alte Episoden dieses Feeds
+                allEpisodes = allEpisodes.filter(episode => episode.feedUrl !== url);
+                allEpisodes.push(...episodes);
+                
+                applyFilters();
+                showStatus(`${episodes.length} Episoden von ${getPodcastTitle(xmlDoc)} geladen`, 'success');
+                
+            } catch (error) {
+                console.error('Error fetching feed:', error);
+                showStatus(`Fehler beim Laden des Feeds: ${error.message}`, 'error');
+            }
+        }
+
+        function getPodcastTitle(xmlDoc) {
+            const title = xmlDoc.querySelector('channel > title');
+            return title ? title.textContent : 'Unbekannter Podcast';
+        }
+
+        function parseRSSFeed(xmlDoc, feedUrl) {
+            const items = xmlDoc.querySelectorAll('item');
+            const episodes = [];
+            const podcastTitle = getPodcastTitle(xmlDoc);
+
+            items.forEach(item => {
+                const title = item.querySelector('title')?.textContent || 'Unbekannter Titel';
+                const pubDate = item.querySelector('pubDate')?.textContent || '';
+                const description = item.querySelector('description')?.textContent || '';
+                
+                const host = extractHost(item, description);
+                const guest = extractGuest(item, description);
+
+                const episode = {
+                    podcastName: podcastTitle,
+                    episodeTitle: title,
+                    pubDate: formatDate(pubDate),
+                    rawDate: pubDate,
+                    host: host,
+                    guest: guest,
+                    feedUrl: feedUrl,
+                    description: description
+                };
+
+                episodes.push(episode);
+
+                // Initialisiere Episode-Daten falls noch nicht vorhanden
+                const episodeId = getEpisodeId(episode);
+                if (!episodeData.has(episodeId)) {
+                    episodeData.set(episodeId, {
+                        language: '',
+                        topic: '',
+                        favorite: false
+                    });
+                }
+            });
+
+            return episodes;
+        }
+
+        function extractHost(item, description) {
+            const author = item.querySelector('author')?.textContent ||
+                          item.querySelector('itunes\\:author')?.textContent ||
+                          item.querySelector('dc\\:creator')?.textContent;
+            
+            if (author) return author;
+            
+            const hostMatch = description.match(/host[ed by]*:?\s*([^,\n]+)/i);
+            if (hostMatch) return hostMatch[1].trim();
+            
+            return 'Unbekannt';
+        }
+
+        function extractGuest(item, description) {
+            const guestMatches = [
+                /guest:?\s*([^,\n]+)/i,
+                /featuring:?\s*([^,\n]+)/i,
+                /with:?\s*([^,\n]+)/i,
+                /interview.*?with:?\s*([^,\n]+)/i
+            ];
+            
+            for (const pattern of guestMatches) {
+                const match = description.match(pattern);
+                if (match && match[1].trim().length > 0) {
+                    return match[1].trim();
+                }
+            }
+            
+            return 'Keine Angabe';
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'Unbekannt';
+            
+            try {
+                const date = new Date(dateString);
+                if (isNaN(date.getTime())) return 'Unbekannt';
+                
+                return date.toLocaleDateString('de-DE', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                });
+            } catch (error) {
+                return 'Unbekannt';
+            }
+        }
+
+        function highlightText(text, searchTerm) {
+            if (!searchTerm) return text;
+            
+            const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            return text.replace(regex, '<span class="highlight">$1</span>');
+        }
+
+        function searchEpisodes(searchTerm) {
+            if (!searchTerm) {
+                return [...allEpisodes];
+            }
+
+            const term = searchTerm.toLowerCase();
+            return allEpisodes.filter(episode => {
+                const episodeId = getEpisodeId(episode);
+                const data = episodeData.get(episodeId) || { language: '', topic: '', favorite: false };
+                
+                return episode.podcastName.toLowerCase().includes(term) ||
+                       episode.episodeTitle.toLowerCase().includes(term) ||
+                       episode.host.toLowerCase().includes(term) ||
+                       episode.guest.toLowerCase().includes(term) ||
+                       episode.description.toLowerCase().includes(term) ||
+                       data.language.toLowerCase().includes(term) ||
+                       data.topic.toLowerCase().includes(term);
+            });
+        }
+
+        function applyTimeFilter(episodes) {
+            const timeFilter = document.getElementById('timeFilter').value;
+            if (timeFilter === 'all') return episodes;
+
+            const now = new Date();
+            const filterDate = new Date();
+
+            switch (timeFilter) {
+                case 'week':
+                    filterDate.setDate(now.getDate() - 7);
+                    break;
+                case 'month':
+                    filterDate.setMonth(now.getMonth() - 1);
+                    break;
+                case 'quarter':
+                    filterDate.setMonth(now.getMonth() - 3);
+                    break;
+                case 'year':
+                    filterDate.setFullYear(now.getFullYear() - 1);
+                    break;
+            }
+
+            return episodes.filter(episode => {
+                const episodeDate = new Date(episode.rawDate);
+                return episodeDate >= filterDate;
+            });
+        }
+
+        function applyCountFilter(episodes) {
+            const countFilter = document.getElementById('countFilter').value;
+            if (countFilter === 'all') return episodes;
+
+            const count = parseInt(countFilter);
+            return episodes.slice(0, count);
+        }
+
+        function applyFilters() {
+            const searchInput = document.getElementById('searchInput');
+            currentSearchTerm = searchInput.value.trim();
+            
+            // Erst suchen
+            let episodes = searchEpisodes(currentSearchTerm);
+            
+            // Dann nach Datum sortieren
+            episodes = [...episodes].sort((a, b) => {
+                const dateA = new Date(a.rawDate);
+                const dateB = new Date(b.rawDate);
+                return dateB - dateA;
+            });
+            
+            // Dann Zeitfilter anwenden
+            episodes = applyTimeFilter(episodes);
+            
+            // Dann Anzahl-Filter anwenden
+            episodes = applyCountFilter(episodes);
+            
+            filteredEpisodes = episodes;
+            updateTable();
+            updateSearchStats();
+        }
+
+        function updateSearchStats() {
+            const statsElement = document.getElementById('searchStats');
+            
+            if (currentSearchTerm) {
+                const totalEpisodes = allEpisodes.length;
+                const filteredCount = filteredEpisodes.length;
+                statsElement.textContent = `${filteredCount} von ${totalEpisodes} Episoden gefunden für "${currentSearchTerm}"`;
+                statsElement.classList.add('active');
+            } else {
+                statsElement.classList.remove('active');
+            }
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            currentSearchTerm = '';
+            applyFilters();
+        }
+
+        function makeEditable(element, episodeId, field) {
+            const currentValue = element.textContent;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentValue;
+            input.className = 'editable-input';
+            
+            element.innerHTML = '';
+            element.appendChild(input);
+            element.classList.add('editing');
+            
+            input.focus();
+            input.select();
+            
+            function saveEdit() {
+                const newValue = input.value.trim();
+                element.textContent = newValue;
+                element.classList.remove('editing');
+                
+                // Speichere die Änderung
+                const data = episodeData.get(episodeId) || { language: '', topic: '', favorite: false };
+                data[field] = newValue;
+                episodeData.set(episodeId, data);
+            }
+            
+            input.addEventListener('blur', saveEdit);
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    saveEdit();
+                }
+            });
+        }
+
+        function toggleFavorite(episodeId, starElement) {
+            const data = episodeData.get(episodeId) || { language: '', topic: '', favorite: false };
+            data.favorite = !data.favorite;
+            episodeData.set(episodeId, data);
+            
+            if (data.favorite) {
+                starElement.textContent = '⭐';
+                starElement.className = 'favorite-star active';
+            } else {
+                starElement.textContent = '☆';
+                starElement.className = 'favorite-star inactive';
+            }
+        }
+
+        function updateTable() {
+            const tbody = document.getElementById('episodeTableBody');
+            const episodesToShow = filteredEpisodes.length > 0 ? filteredEpisodes : allEpisodes;
+            
+            if (episodesToShow.length === 0) {
+                if (currentSearchTerm) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="8" class="no-results">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                </svg>
+                                <h3>Keine Ergebnisse gefunden</h3>
+                                <p>Keine Episoden entsprechen den Suchkriterien "${currentSearchTerm}"</p>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="8" class="empty-state">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                                </svg>
+                                <h3>Noch keine Episoden geladen</h3>
+                                <p>Fügen Sie RSS-Feeds hinzu und aktualisieren Sie, um Episoden zu sehen</p>
+                            </td>
+                        </tr>
+                    `;
+                }
+                return;
+            }
+
+            tbody.innerHTML = episodesToShow.map(episode => {
+                const episodeId = getEpisodeId(episode);
+                const data = episodeData.get(episodeId) || { language: '', topic: '', favorite: false };
+                
+                return `
+                    <tr>
+                        <td class="podcast-name">${highlightText(episode.podcastName, currentSearchTerm)}</td>
+                        <td class="episode-title" title="${episode.episodeTitle}">${highlightText(episode.episodeTitle, currentSearchTerm)}</td>
+                        <td class="date">${episode.pubDate}</td>
+                        <td class="host">${highlightText(episode.host, currentSearchTerm)}</td>
+                        <td class="guest">${highlightText(episode.guest, currentSearchTerm)}</td>
+                        <td class="editable" onclick="makeEditable(this, '${episodeId}', 'language')">${highlightText(data.language || 'Klicken zum Bearbeiten', currentSearchTerm)}</td>
+                        <td class="editable" onclick="makeEditable(this, '${episodeId}', 'topic')">${highlightText(data.topic || 'Klicken zum Bearbeiten', currentSearchTerm)}</td>
+                        <td>
+                            <span class="favorite-star ${data.favorite ? 'active' : 'inactive'}" 
+                                  onclick="toggleFavorite('${episodeId}', this)">
+                                ${data.favorite ? '⭐' : '☆'}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function refreshAll() {
+            if (podcastFeeds.length === 0) {
+                showStatus('Keine Feeds zum Aktualisieren vorhanden', 'error');
+                return;
+            }
+
+            showStatus('Aktualisiere alle Feeds...', 'loading');
+            
+            let completedFeeds = 0;
+            const totalFeeds = podcastFeeds.length;
+            
+            podcastFeeds.forEach(async (feedUrl) => {
+                try {
+                    await fetchFeed(feedUrl);
+                } catch (error) {
+                    console.error(`Error refreshing feed ${feedUrl}:`, error);
+                } finally {
+                    completedFeeds++;
+                    if (completedFeeds === totalFeeds) {
+                        showStatus(`Alle ${totalFeeds} Feeds aktualisiert`, 'success');
+                    }
+                }
+            });
+        }
+
+        function exportToCSV() {
+            if (allEpisodes.length === 0) {
+                showStatus('Keine Episoden zum Exportieren vorhanden', 'error');
+                return;
+            }
+
+            const headers = ['Podcast', 'Episode', 'Datum', 'Host', 'Gast', 'Sprache', 'Thema', 'Favorit'];
+            const csvContent = [
+                headers.join(','),
+                ...allEpisodes.map(episode => {
+                    const episodeId = getEpisodeId(episode);
+                    const data = episodeData.get(episodeId) || { language: '', topic: '', favorite: false };
+                    
+                    return [
+                        `"${episode.podcastName.replace(/"/g, '""')}"`,
+                        `"${episode.episodeTitle.replace(/"/g, '""')}"`,
+                        `"${episode.pubDate}"`,
+                        `"${episode.host.replace(/"/g, '""')}"`,
+                        `"${episode.guest.replace(/"/g, '""')}"`,
+                        `"${data.language.replace(/"/g, '""')}"`,
+                        `"${data.topic.replace(/"/g, '""')}"`,
+                        `"${data.favorite ? 'Ja' : 'Nein'}"`
+                    ].join(',');
+                })
+            ].join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `podcast_episodes_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showStatus(`${allEpisodes.length} Episoden als CSV exportiert`, 'success');
+        }
+    </script>
+</body>
+</html>
+
